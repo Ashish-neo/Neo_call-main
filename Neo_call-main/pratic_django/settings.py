@@ -26,7 +26,9 @@ SECRET_KEY = 'django-insecure-kj$f-rj7l_1-5a*@k6y%y*gm3t(q^=#9yewht6+pk6vs@c)u=i
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DJANGO_DEBUG", "True").lower() in {"1", "true", "yes", "on"}
 
-ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,0.0.0.0").split(",") if host.strip()]
+default_hosts = ["localhost", "127.0.0.1", "0.0.0.0", "16.171.8.61", "openproblem.in", "www.openproblem.in"]
+extra_hosts = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "").split(",") if host.strip()]
+ALLOWED_HOSTS = default_hosts + extra_hosts
 
 public_host = os.getenv("PUBLIC_HOST", "").strip()
 if public_host:
@@ -180,10 +182,20 @@ CHANNEL_LAYERS = {
 #     password="KQBC3o56sXW6NNIfiQ1ks7ET5O0XLzzX",
 # )
 CORS_ALLOW_ALL_ORIGINS = True  # Or restrict to your frontend domain
-CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.getenv(
-    "CSRF_TRUSTED_ORIGINS",
-    "http://localhost:8000,http://127.0.0.1:8000,http://localhost:5000,http://127.0.0.1:5000"
-).split(",") if origin.strip()]
+csrf_origins = [
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "http://localhost:5000",
+    "http://127.0.0.1:5000",
+    "http://16.171.8.61",
+    "https://16.171.8.61",
+    "http://openproblem.in",
+    "https://openproblem.in",
+    "http://www.openproblem.in",
+    "https://www.openproblem.in",
+]
+extra_origins = [origin.strip() for origin in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if origin.strip()]
+CSRF_TRUSTED_ORIGINS = csrf_origins + extra_origins
 
 if public_host:
     CSRF_TRUSTED_ORIGINS.extend([f"http://{public_host}", f"https://{public_host}"])
