@@ -7,15 +7,5 @@ requests
 Flask
 Flask-SocketIO
 python-socketio
-aiortc
-asgiref
-torch
-Pillow
-PyMuPDF
-faiss-cpu
-numpy
-pytesseract
-transformers
-qwen-vl-utils
-sentence-transformers
-colpali-engine
+gunicorn
+daphne
