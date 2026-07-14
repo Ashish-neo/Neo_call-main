@@ -87,7 +87,19 @@
     <form method="post" action="{% url 'login_page' %}">
       {% csrf_token %}
       <div class="text-center fw-bold text-success mb-3">Login as Requester</div>
-      <input type="text" class="form-control mb-3" name="username" placeholder="Enter your mobile number">
+      
+      <div class="input-group mb-3">
+        <select class="form-select" name="country_code" style="max-width: 100px;">
+          <option value="+91" selected>🇮🇳 +91</option>
+          <option value="+1">🇺🇸 +1</option>
+          <option value="+44">🇬🇧 +44</option>
+          <option value="+86">🇨🇳 +86</option>
+          <option value="+81">🇯🇵 +81</option>
+          <option value="+61">🇦🇺 +61</option>
+        </select>
+        <input type="text" class="form-control" name="username" placeholder="Mobile number">
+      </div>
+      
       <input type="password" class="form-control mb-3" name="pass1" placeholder="Passcode">
 
       <div class="d-flex justify-content-around mb-3">

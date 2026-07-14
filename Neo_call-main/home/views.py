@@ -46,12 +46,16 @@ def home(request):
 def login_page(request):
     if request.method == "POST":
         username = request.POST.get("username")
+        country_code = request.POST.get("country_code", "+91")  # Default to India
         login_pass = request.POST.get("pass1")
-        # print(username,login_pass)
-        user = authenticate(request,username=username,password=login_pass)
+        
+        # Combine country code with username (mobile number)
+        full_phone = f"{country_code}{username}".replace(" ", "")
+        
+        user = authenticate(request, username=full_phone, password=login_pass)
         #if username and password is not valid 
         if user is None:
-            print("Auth failed for:", username, login_pass)
+            print("Auth failed for:", full_phone, login_pass)
             messages.error(request,"Invalid username or password")
         else:
             login(request,user)
@@ -83,11 +87,14 @@ def sign_up(request):
         age = request.POST.get("age")
         gender = request.POST.get("gender")
         occupation = request.POST.get("occupation")
-        phone_number = request.POST.get("mobile")
+        mobile = request.POST.get("mobile")
+        country_code = request.POST.get("country_code", "+91")  # Default to India
         email = request.POST.get("email")
         password = request.POST.get("password")
         confirmpassword = request.POST.get("confirmpassword")
 
+        # Combine country code with mobile number
+        phone_number = f"{country_code}{mobile}".replace(" ", "")
 
         # Mobile validation
         if not validate_mobile(phone_number):

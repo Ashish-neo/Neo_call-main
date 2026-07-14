@@ -45,7 +45,26 @@
       </div>
       <div class="mb-3">
         <label for="inputsignupmobile" class="form-label fw-bold">Mobile Number</label>
-        <input type="text" class="form-control" name="mobile" id="inputsignupmobile" required>
+        <div class="input-group">
+          <select class="form-select" id="countryCode" name="country_code" style="max-width: 120px;">
+            <option value="+91" selected>🇮🇳 India (+91)</option>
+            <option value="+1">🇺🇸 USA (+1)</option>
+            <option value="+44">🇬🇧 UK (+44)</option>
+            <option value="+86">🇨🇳 China (+86)</option>
+            <option value="+81">🇯🇵 Japan (+81)</option>
+            <option value="+61">🇦🇺 Australia (+61)</option>
+            <option value="+33">🇫🇷 France (+33)</option>
+            <option value="+49">🇩🇪 Germany (+49)</option>
+            <option value="+39">🇮🇹 Italy (+39)</option>
+            <option value="+34">🇪🇸 Spain (+34)</option>
+            <option value="+55">🇧🇷 Brazil (+55)</option>
+            <option value="+27">🇿🇦 South Africa (+27)</option>
+            <option value="+92">🇵🇰 Pakistan (+92)</option>
+            <option value="+880">🇧🇩 Bangladesh (+880)</option>
+            <option value="+94">🇱🇰 Sri Lanka (+94)</option>
+          </select>
+          <input type="text" class="form-control" name="mobile" id="inputsignupmobile" placeholder="Enter mobile number" required>
+        </div>
       </div>
       {% comment %} <div id="otpSection" style="display: none;" class="mb-3">
         <label for="otpInput" class="form-label fw-bold">Enter OTP</label>
