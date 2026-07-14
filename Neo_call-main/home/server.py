@@ -1,6 +1,7 @@
+import os
+import logging
 from flask import Flask, request
 from flask_socketio import SocketIO, emit, join_room, leave_room
-import logging
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -16,6 +17,9 @@ socketio = SocketIO(
     transports=['websocket'],
     async_mode='threading'
 )
+
+SIGNALING_HOST = os.getenv('SIGNALING_HOST', '0.0.0.0')
+SIGNALING_PORT = int(os.getenv('SIGNALING_PORT', '5001'))
 
 # Store socket IDs and map them to Django user IDs
 socket_ids = set()
@@ -145,5 +149,5 @@ def handle_call_disconnect(data):
         emit('call-disconnect', {}, room=target_socket_id)
 
 if __name__ == '__main__':
-    logger.info('Signaling server running on port 5001')
-    socketio.run(app, host='0.0.0.0', port=5001, debug=True)
+    logger.info(f'Signaling server running on {SIGNALING_HOST}:{SIGNALING_PORT}')
+    socketio.run(app, host=SIGNALING_HOST, port=SIGNALING_PORT, debug=False)

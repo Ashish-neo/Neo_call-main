@@ -59,7 +59,7 @@
             const userConfirmed = confirm("Are you sure you want to log out?");
             if (userConfirmed) {
                 // Redirect to the logout endpoint
-                window.location.href = 'http://127.0.0.1:8000/logout/'; // Replace with your logout URL
+                window.location.href = window.location.origin + '/logout/';
             }
         }
     </script>

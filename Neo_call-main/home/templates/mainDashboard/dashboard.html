@@ -49,7 +49,11 @@
 
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script>
-const socket = io('http://localhost:5001', { transports: ['websocket'] });
+window.SIGNALING_SERVER_URL = "{{ signaling_server_url|default:'' }}";
+</script>
+<script>
+const signalingServerUrl = window.SIGNALING_SERVER_URL || (window.location.protocol === 'https:' ? 'https://' : 'http://') + window.location.hostname + ':5001';
+const socket = io(signalingServerUrl, { transports: ['websocket'] });
 const currentUserId = document.getElementById('my_id').textContent.trim();
 
 socket.on('connect', () => {

@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -23,9 +24,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-kj$f-rj7l_1-5a*@k6y%y*gm3t(q^=#9yewht6+pk6vs@c)u=i'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DJANGO_DEBUG", "True").lower() in {"1", "true", "yes", "on"}
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,0.0.0.0").split(",") if host.strip()]
+
+public_host = os.getenv("PUBLIC_HOST", "").strip()
+if public_host:
+    ALLOWED_HOSTS.append(public_host)
 
 
 # Application definition
@@ -58,6 +63,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
 ]
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 ROOT_URLCONF = 'pratic_django.urls'
 
@@ -173,6 +180,11 @@ CHANNEL_LAYERS = {
 #     password="KQBC3o56sXW6NNIfiQ1ks7ET5O0XLzzX",
 # )
 CORS_ALLOW_ALL_ORIGINS = True  # Or restrict to your frontend domain
-CSRF_TRUSTED_ORIGINS = ['http://localhost:8000', "https://*.ngrok-free.app"]  # Adjust accordingly
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '103.47.72.196','.ngrok-free.app','*']  # Adjust accordingly
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.getenv(
+    "CSRF_TRUSTED_ORIGINS",
+    "http://localhost:8000,http://127.0.0.1:8000,http://localhost:5000,http://127.0.0.1:5000"
+).split(",") if origin.strip()]
+
+if public_host:
+    CSRF_TRUSTED_ORIGINS.extend([f"http://{public_host}", f"https://{public_host}"])
 

@@ -15,6 +15,9 @@
 <button id="disconnectBtn" class="btn btn-danger">Disconnect</button>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script>
+window.SIGNALING_SERVER_URL = "{{ signaling_server_url|default:'' }}";
+</script>
+<script>
 const log = msg => document.getElementById('log').textContent += msg + '\n';
 
 // Get target socket ID from URL
@@ -28,7 +31,8 @@ let callFrom = null;
 let isCaller = !!targetId;
 let callAccepted = false;
 
-const socket = io('http://localhost:5001', { transports: ['websocket'] });
+const signalingServerUrl = window.SIGNALING_SERVER_URL || (window.location.protocol === 'https:' ? 'https://' : 'http://') + window.location.hostname + ':5001';
+const socket = io(signalingServerUrl, { transports: ['websocket'] });
 
 socket.on('connect', () => {
   myId = socket.id;

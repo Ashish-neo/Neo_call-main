@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 import socketio
 from aiortc import RTCPeerConnection, RTCSessionDescription, VideoStreamTrack
 
@@ -150,7 +151,8 @@ async def command_loop():
             print("Unknown command.")
 
 async def main():
-    await sio.connect('http://localhost:5001', transports=['websocket'])
+    signaling_url = os.getenv('SIGNALING_SERVER_URL', '').strip() or 'http://localhost:5001'
+    await sio.connect(signaling_url, transports=['websocket'])
     await asyncio.gather(
         sio.wait(),
         command_loop()

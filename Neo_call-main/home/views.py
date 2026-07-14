@@ -15,6 +15,7 @@ import re
 from .helpers import send_otp_user
 from django.urls import reverse_lazy
 from django.http import JsonResponse
+import os
 import time
 
 User = get_user_model()
@@ -23,6 +24,21 @@ User = get_user_model()
 # from django.contrib.auth import User
 
 # Create your views here.
+
+def build_signaling_server_url(request):
+    configured_url = os.getenv("SIGNALING_SERVER_URL", "").strip()
+    if configured_url:
+        return configured_url
+
+    host = request.get_host()
+    if ":" in host and host.rsplit(":", 1)[1].isdigit():
+        hostname = host.rsplit(":", 1)[0]
+    else:
+        hostname = host
+
+    scheme = "https" if request.is_secure() else "http"
+    return f"{scheme}://{hostname}:5001"
+
 
 def home(request):
     return render(request,'home_page.html')
@@ -216,6 +232,7 @@ def dashboard(request):
         'login_user_number': login_user_number,
         'other_user_number': other_user_number,
         'other_user_id': other_user_id,
+        'signaling_server_url': build_signaling_server_url(request),
     })
 
 #To track the calling protocol with array and calling 20 sec
@@ -245,7 +262,8 @@ def call_page(request):
 
     context = {
         'current_number': curemt_no_in_list,
-        'available_numbers': available_numbers
+        'available_numbers': available_numbers,
+        'signaling_server_url': build_signaling_server_url(request),
     } 
 
     return render(request, 'calls/call.html',context)
