@@ -10,7 +10,14 @@ except ImportError:
     TWILIO_AVAILABLE = False
 
 def send_otp_user(phone_number):
-    """Send OTP via WhatsApp using Twilio (signup only - no fallback)"""
+    """Send OTP via WhatsApp using Twilio (signup only - no fallback)
+    
+    Args:
+        phone_number: User's phone number in E.164 format (e.g., +919876543210)
+    
+    Returns:
+        OTP (1000-9999) if sent successfully, None if failed
+    """
     try:
         otp = random.randint(1000, 9999)
         
@@ -20,11 +27,11 @@ def send_otp_user(phone_number):
         twilio_whatsapp_from = os.getenv('TWILIO_WHATSAPP_FROM')  # Format: whatsapp:+14155238886
         
         if not TWILIO_AVAILABLE:
-            print("Twilio not installed. Run: pip install twilio")
+            print(f"❌ Twilio not installed. Run: pip install twilio")
             return None
         
         if not all([twilio_account_sid, twilio_auth_token, twilio_whatsapp_from]):
-            print("Twilio credentials missing:")
+            print("❌ Twilio credentials missing:")
             print(f"   TWILIO_ACCOUNT_SID: {'SET' if twilio_account_sid else 'NOT SET'}")
             print(f"   TWILIO_AUTH_TOKEN: {'SET' if twilio_auth_token else 'NOT SET'}")
             print(f"   TWILIO_WHATSAPP_FROM: {'SET' if twilio_whatsapp_from else 'NOT SET'}")
@@ -39,12 +46,19 @@ def send_otp_user(phone_number):
             else:
                 phone_number_formatted = str(phone_number)
             
+            # DEBUG: Show which user number is getting the OTP
+            print(f"\n Sending OTP to USER's WhatsApp number: {phone_number_formatted}")
+            print(f"   OTP Code: {otp}")
+            print(f"   From Twilio: {twilio_whatsapp_from}\n")
+            
             message = client.messages.create(
                 from_=twilio_whatsapp_from,
                 to=f"whatsapp:{phone_number_formatted}",
                 body=f"Your One Time Password (OTP) is: {otp}\n\nDo not share this with anyone."
             )
-            print(f"✓ WhatsApp OTP sent: {message.sid}")
+            print(f"WhatsApp OTP successfully sent!")
+            print(f"   Message SID: {message.sid}")
+            print(f"   Sent to: {phone_number_formatted}\n")
             return otp
             
         except Exception as twilio_error:

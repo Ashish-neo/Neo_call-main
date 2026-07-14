@@ -125,11 +125,21 @@ def sign_up(request):
             return redirect('/sign_up/')
 
         # Generate and send OTP
+        print(f"\n👤 USER SIGNUP INITIATED:")
+        print(f"   Name: {name}")
+        print(f"   Email: {email}")
+        print(f"   Country Code: {country_code}")
+        print(f"   Mobile Input: {mobile}")
+        print(f"   ✅ FINAL PHONE NUMBER: {phone_number}")
+        print(f"   Sending OTP to this number...\n")
+        
         otp = send_otp_user(phone_number)
 
         if not otp:
             messages.error(request, "Check Mobile is correct or not. Please try again.")
             return render(request, 'sign_up.html')
+        
+        print(f"✅ OTP SENT successfully to {phone_number}")
         
         # Store signup data and OTP in session
         request.session['signup_data'] = {
