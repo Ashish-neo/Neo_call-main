@@ -9,3 +9,4 @@ Flask-SocketIO
 python-socketio
 gunicorn
 daphne
+twilio

@@ -169,26 +169,26 @@ def verify_otp(request):
         print("signup_data--->",signup_data)
         # Create user
         try:
-            print("Attempting to create user...") # use request_user to create user and call object ".objects.create". object actually call 
-            user = Request_User.objects.create(   # custom user in UserManager class
+            print("Attempting to create user...")
+            user = Request_User.objects.create(
                 name=signup_data['name'],
                 email=signup_data['email'],
-                occupation=signup_data['occupation'] ,
+                occupation=signup_data['occupation'],
                 phone_number=signup_data['mobile'],
                 age=signup_data['age'],
                 gender=signup_data['gender'],
-                password=make_password(signup_data['password']),
-                is_Verified = True # Set is_verified to True if user otp is verified
+                is_Verified=True
             )
-            print("user--->",user)
+            # Set password properly (hashes it)
             user.set_password(signup_data['password'])
             user.save()
 
-            # Get the unhashed password from the form data
+            print("user--->", user)
+            
             # Authenticate the user
-            # Note: You might need to customize this based on your custom user model
             authenticated_user = authenticate(
-                username=signup_data['mobile'], 
+                request=request,
+                username=signup_data['mobile'],
                 password=signup_data['password']
             )
             print("Redirecting to dashboard with authenticated user:", authenticated_user)

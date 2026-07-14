@@ -26,7 +26,7 @@ class Request_User(AbstractBaseUser,PermissionsMixin):
     occupation = models.CharField(max_length=50,null=False,blank=False,default="Student")
     phone_number = models.BigIntegerField(unique=True,null=False,blank=True,default="0123456789")
     email = models.EmailField(unique=True,max_length=100,null=False,blank=True,default="Unknown")
-    password = models.CharField(max_length=20,null=False)
+    password = models.CharField(max_length=255,null=False)
     is_Verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
