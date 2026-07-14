@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+{% block title %}Call{% endblock %}
+{% block content %}
+<h2>WebRTC Call Page</h2>
+<pre id="log"></pre>
+<span id="my_id" style="display:none;">{{ request.user.id }}</span>
+<video id="localVideo" autoplay muted playsinline style="width: 300px; border:1px solid #ccc;"></video>
+<video id="remoteVideo" autoplay playsinline style="width: 300px; border:1px solid #ccc;"></video>
+<br>
+<div id="incomingCall" style="display:none;">
+  <p>Incoming call...</p>
+  <button id="acceptBtn" class="btn btn-success">Accept</button>
+  <button id="declineBtn" class="btn btn-danger">Decline</button>
+</div>
+<button id="disconnectBtn" class="btn btn-danger">Disconnect</button>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+const log = msg => document.getElementById('log').textContent += msg + '\n';
+
+// Get target socket ID from URL
+const urlParams = new URLSearchParams(window.location.search);
+const targetId = urlParams.get('target');
+let myId = null;
+let myUserId = document.getElementById('my_id').textContent.trim();
+let pc = null;
+let localStream = null;
+let callFrom = null;
+let isCaller = !!targetId;
+let callAccepted = false;
+
+const socket = io('http://localhost:5001', { transports: ['websocket'] });
+
+socket.on('connect', () => {
+  myId = socket.id;
+  log('Connected. My ID: ' + myId);
+  if (myUserId) {
+    socket.emit('register', { userId: myUserId });
+  }
+  if (targetId) {
+    log('Sending call request to ' + targetId);
+    socket.emit('call-request', { targetUserId: targetId, fromUserId: myUserId });
+  } else {
+    log('Waiting for incoming call...');
+  }
+});
+
+// Handle incoming call request
+socket.on('call-request', data => {
+  callFrom = data.fromUserId || data.from;
+  if (!isCaller) {
+    showCallRequestUI(callFrom);
+  }
+});
+
+function showCallRequestUI(fromId) {
+  document.getElementById('incomingCall').style.display = 'block';
+  document.getElementById('acceptBtn').onclick = async () => {
+    socket.emit('call-accept', { targetUserId: fromId, fromUserId: myUserId });
+    hideCallRequestUI();
+    await startWebRTCAsReceiver(fromId);
+  };
+  document.getElementById('declineBtn').onclick = () => {
+    socket.emit('call-decline', { targetUserId: fromId });
+    hideCallRequestUI();
+    log('Call declined.');
+  };
+}
+function hideCallRequestUI() {
+  document.getElementById('incomingCall').style.display = 'none';
+}
+
+// Caller listens for accept/decline
+socket.on('call-accept', async data => {
+  if (!isCaller) return;
+  const callerId = data.fromUserId || data.from;
+  log('Call accepted by ' + callerId);
+  callAccepted = true;
+  await startWebRTCAsCaller(callerId);
+});
+socket.on('call-decline', data => {
+  log('Call declined by user.');
+  alert('Call declined by user.');
+});
+
+// WebRTC logic for caller
+async function startWebRTCAsCaller(target) {
+  await setupMedia();
+  pc = createPeerConnection(target);
+  localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  socket.emit('offer', { targetUserId: target, offer });
+  log('Sent offer to ' + target);
+}
+
+// WebRTC logic for receiver
+async function startWebRTCAsReceiver(fromId) {
+  await setupMedia();
+  pc = createPeerConnection(fromId);
+  localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+  // Wait for offer from caller, handled in socket.on('offer')
+}
+
+function createPeerConnection(target) {
+  const pc = new RTCPeerConnection({
+    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+  });
+
+  pc.onicecandidate = event => {
+    if (event.candidate) {
+      socket.emit('ice-candidate', { targetUserId: target, candidate: event.candidate });
+      log('Sent ICE candidate');
+    }
+  };
+
+  pc.ontrack = event => {
+    log('Received remote track');
+    document.getElementById('remoteVideo').srcObject = event.streams[0];
+  };
+
+  return pc;
+}
+
+async function setupMedia() {
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    document.getElementById('localVideo').srcObject = localStream;
+  } catch (e) {
+    log('Could not get user media: ' + e);
+  }
+}
+
+// WebRTC signaling handlers
+socket.on('offer', async data => {
+  log('Received offer from ' + data.from);
+  if (!pc) {
+    await setupMedia();
+    pc = createPeerConnection(data.from);
+    localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+  }
+  await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+  socket.emit('answer', { targetUserId: data.fromUserId || data.from, answer });
+  log('Sent answer to ' + data.from);
+});
+
+socket.on('answer', async data => {
+  log('Received answer from ' + data.from);
+  await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+});
+
+socket.on('ice-candidate', async data => {
+  log('Received ICE candidate from ' + data.from);
+  try {
+    await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+  } catch (e) {
+    log('Error adding ICE candidate: ' + e);
+  }
+});
+
+// Disconnect button handler
+document.getElementById('disconnectBtn').onclick = function() {
+    if (socket && socket.connected && (targetId || callFrom)) {
+        // Notify the other user
+        socket.emit('call-disconnect', { target: targetId || callFrom });
+    }
+    disconnectCall();
+    window.location.href = '/dashboard/';
+};
+
+// Listen for disconnect event from the other user
+socket.on('call-disconnect', () => {
+    log('The other user disconnected.');
+    disconnectCall();
+    alert('The other user has disconnected the call.');
+    window.location.href = '/dashboard/';
+});
+
+// Function to close the call and clean up
+function disconnectCall() {
+    if (pc) {
+        pc.close();
+        pc = null;
+        log('WebRTC connection closed.');
+    }
+    // Optionally disconnect socket or redirect
+    // socket.disconnect();
+    // window.location.href = '/dashboard/';
+}
+</script>
+{% endblock %}

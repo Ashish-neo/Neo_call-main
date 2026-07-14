@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    background-color: #f9f9f9;
+  }
+
+  button {
+    background-color: #45a049;
+    color: white;
+    padding: 15px 20px;
+    margin: 10px;
+    border: none;
+    cursor: pointer;
+    font-size: 1.25rem;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+  }
+
+  button:hover {
+    background-color: #45a049;
+  }
+
+  .dialog {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    width: 90%;
+    max-width: 400px;
+  }
+
+  .overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+  }
+
+  .card {
+    box-shadow: 0 4px 8px 0 #F4DD7D;
+    transition: 0.3s;
+    background-color: #E9F5F6;
+  }
+
+  .card:hover {
+    box-shadow: 0 8px 16px 0 #DFAAAA;
+  }
+  @media (min-width: 768px) {
+    .container.my-3 {
+      max-width: 60%; /* Adjust for larger screens */
+    }
+  }
+</style>
+
+<div class="container py-5 mt-5" style="max-width: 80%;">
+  <div class="card mx-auto" style="max-width: 800px;">
+    <div class="container py-3">
+      <button onclick="showDialog('requesterDialog')">Requester</button>
+      <button onclick="showDialog('receiverDialog')">Receiver</button>
+    </div>
+  </div>
+
+  <!-- Overlay -->
+  <div class="overlay" id="overlay" onclick="hideAllDialogs()"></div>
+
+  <!-- Requester Dialog -->
+  <div class="dialog" id="requesterDialog">
+    <form method="post" action="{% url 'login_page' %}">
+      {% csrf_token %}
+      <div class="text-center fw-bold text-success mb-3">Login as Requester</div>
+      <input type="text" class="form-control mb-3" name="username" placeholder="Enter your mobile number">
+      <input type="password" class="form-control mb-3" name="pass1" placeholder="Passcode">
+
+      <div class="d-flex justify-content-around mb-3">
+        <button type="button" class="btn btn-success btn-lg" onclick="hideDialog('requesterDialog')">Cancel</button>
+        <button type="submit" class="btn btn-success btn-lg">Log in</button>
+      </div>
+    </form>
+
+    <hr class="my-3"> 
+    <div class="text-center"> 
+      <span>Don't have an account?</span> 
+      <a href="{% url 'sign_up' %}" class="text-success fw-bold">Sign Up</a> 
+    </div> 
+  </div> 
+
+  <!-- Receiver Dialog -->
+  <div class="dialog" id="receiverDialog">
+    <form>
+      <div class="text-center fw-bold text-success mb-3">Login as Receiver</div>
+      <input type="text" class="form-control mb-3" placeholder="Enter your mobile number">
+      <input type="password" class="form-control mb-3" placeholder="Passcode">
+
+      <div class="d-flex justify-content-around mb-3">
+        <button type="button" class="btn btn-success btn-lg" onclick="hideDialog('receiverDialog')">Cancel</button>
+        <button type="submit" class="btn btn-success btn-lg">Log in</button>
+      </div>
+    </form>
+
+    <hr class="my-3">
+    <div class="text-center">
+      <span>Don't have an account?</span>
+      <a href="{% url 'sign_up' %}" class="text-success fw-bold">Sign Up</a>
+    </div>
+  </div>
+</div>
+<div>
+  <br>
+  <br>
+  {% if user.is_authenticated %}
+    <!-- Show the Dashboard button if the user is authenticated -->
+    <button type="button" class="btn btn-outline-success">
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-success">Go to Dashboard</a>
+    </button>
+  {% else %}
+      <!-- Show something else or nothing if the user is not authenticated -->
+      <p>You must log in to access the dashboard.</p>
+  {% endif %}
+  <br>
+  <br>
+</div>
+<script>
+  function showDialog(id) {
+    document.getElementById('overlay').style.display = 'block';
+    document.getElementById(id).style.display = 'block';
+  }
+
+  function hideDialog(id) {
+    document.getElementById('overlay').style.display = 'none';
+    document.getElementById(id).style.display = 'none';
+  }
+
+  function hideAllDialogs() {
+    hideDialog('requesterDialog');
+    hideDialog('receiverDialog');
+  }
+</script>
+
+
+
+
+{% comment %} <script>
+    function showDialog(dialogId) {
+      // Show overlay
+      document.getElementById('overlay').style.display = 'block';
+
+      // Show the selected dialog
+      document.getElementById(dialogId).style.display = 'block';
+    }
+
+    function hideDialog(dialogId) {
+      // Hide the specific dialog
+      document.getElementById(dialogId).style.display = 'none';
+
+      // Hide overlay if no dialogs are open
+      if (!document.querySelector('.dialog[style*="display: block"]')) {
+        document.getElementById('overlay').style.display = 'none';
+      }
+    }
+
+    function hideAllDialogs() {
+      // Hide all dialogs and overlay
+      document.querySelectorAll('.dialog').forEach(dialog => {
+        dialog.style.display = 'none';
+      });
+      document.getElementById('overlay').style.display = 'none';
+    }
+    function handleSignup() {
+      alert("Redirect to signup page or handle signup!");
+    }
+
+  </script> {% endcomment %}
+{% endblock %}

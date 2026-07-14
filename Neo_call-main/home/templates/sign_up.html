@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}sign_up{% endblock %}
+
+{% block content %}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<div class="container d-flex align-items-center justify-content-center" style="min-height: 100vh; background-color: #f8f9fa;">
+    <form class="col-md-6 col-sm-10 card p-4 shadow-lg" method="post" enctype="multipart/form-data" style="border-radius: 10px;">
+      {% csrf_token %}
+      <h2 class="text-center fw-bold mb-4">Sign Up</h2>
+      <hr class="mb-4">
+      {% if messages %}
+      <div class="alert alert-primary" role="alert">
+        {% for message in messages %}
+        {{ message }}
+        {% endfor %}
+       </div>
+      {% endif %}
+       
+      <div class="mb-3">
+        <label for="inputsignupname" class="form-label fw-bold">Name</label>
+        <input type="text" class="form-control" id="inputsignupname" name="name" aria-describedby="nameHelp" required>
+        
+      </div>
+      <div class="mb-3">
+        <label for="inputsignupage" class="form-label fw-bold">Age</label>
+        <input type="text" class="form-control" name="age" id="inputsignupage" required>
+      </div>
+        
+      <div class="mb-3">
+        <label for="inputsignupgender" class="form-label fw-bold">Gender</label>
+        <select class="form-control" id="inputsignupgender" name="gender" required>
+            <option value="" disabled selected>Select your gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+      </div>
+      <div class="mb-3">
+        <label for="inputsignupoccupation" class="form-label fw-bold">Occupation</label>
+        <input type="text" class="form-control" id="inputsignupoccupation" name="occupation" aria-describedby="occupationHelp" required>
+        
+      </div>
+      <div class="mb-3">
+        <label for="inputsignupmobile" class="form-label fw-bold">Mobile Number</label>
+        <input type="text" class="form-control" name="mobile" id="inputsignupmobile" required>
+      </div>
+      {% comment %} <div id="otpSection" style="display: none;" class="mb-3">
+        <label for="otpInput" class="form-label fw-bold">Enter OTP</label>
+        <input type="text" class="form-control" id="otpInput" placeholder="Enter OTP">
+        <button type="button" class="btn btn-primary mt-2" id="verifyOtpButton">Verify OTP</button>
+      </div> {% endcomment %}
+
+      <div class="mb-3">
+        <label for="inputsignupemail" class="form-label fw-bold">Email</label>
+        <input type="email" class="form-control" id="inputsignupemail" name="email" aria-describedby="emailHelp" required>
+      </div>
+  
+      <div class="mb-3">
+        <label for="inputsignuppassword" class="form-label fw-bold">Password</label>
+        <input type="password" class="form-control" id="inputsignuppassword" name="password" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="inputConfirmPassword" class="form-label fw-bold">Confirm Password</label>
+        <input type="password" class="form-control" id="inputConfirmPassword" name="confirmpassword" required>
+        {% comment %} <div id="passwordHelp" class="form-text" style="font-size: 12px; color: rgb(211, 99, 99);">Password does't match.</div> {% endcomment %}
+      </div>
+      <div id="otpSection" style="display: none;" class="mb-3">
+        <label for="otpInput" class="form-label fw-bold">Enter OTP</label>
+        <input type="text" class="form-control" id="otpInput" name="userOtp" placeholder="Enter OTP">
+        <button type="Submit" class="btn btn-primary mt-2" id="verifyOtpButton">Verify OTP</button>
+      </div>
+      <p>We'll never share your data with anyone else.</p>
+      <hr class="mb-4">
+      <div class="d-flex justify-content-between align-items-center">
+        <button type="submit" class="btn btn-primary fw-bold px-4">Register</button>
+        <a href="{% url 'home' %}" class="btn btn-secondary fw-bold px-4">Cancel</a>
+      </div>
+      <!-- Go Back Button -->
+        <button type="button" class="btn btn-secondary" onclick="window.location.href='/'" style="
+        background: none; 
+        border: none; 
+        color: #7CE681; 
+        cursor: pointer; 
+        font-size: 15px; 
+        margin-top: 4px;
+        margin-left: 2px">
+        <i class="bi bi-arrow-left-circle"></i> Go Back to Home
+    </button>
+    </form>
+  </div>
+
+
+<script>
+  $(document).ready(function() {
+    // Initially hide OTP section
+    $('#otpSection').hide();
+
+    // Handle form submission
+    $('form').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Collect form data
+        var formData = $(this).serialize();
+
+        // Submit form via AJAX
+        $.ajax({
+            url: "{% url 'sign_up' %}",
+            method: "POST",
+            data: formData,
+            success: function(response) {
+                // If OTP section is in the response, show it
+                if ($(response).find('#otpSection').length > 0) {
+                    $('#otpSection').show();
+                }
+            },
+            error: function(xhr) {
+                // Handle errors
+                alert('An error occurred. Please try again.');
+            }
+        });
+    });
+
+    // Verify OTP
+    $('#verifyOtpButton').click(function() {
+        var otpValue = $('#otpInput').val();
+        
+        // Submit OTP via AJAX
+        $.ajax({
+            url: "{% url 'verify_otp' %}",
+            method: "POST",
+            data: {
+                'otp': otpValue,
+                'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(response) {
+                // Redirect or show success message
+                window.location.href = "{% url 'dashboard' %}";
+            },
+            error: function(xhr) {
+                alert('Invalid OTP. Please try again.');
+            }
+        });
+    }); 
+});
+</script>
+{% endblock %}
+
+

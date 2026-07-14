@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<p class="fst-italic"> Welcome, {{request.user.name}}</p>
+<p>Your ID: <span id="my_id">{{ request.user.id }}</span></p>
+<p>Your Socket.IO ID: <span id="socketId"></span></p>
+<input type="hidden" id="default_remote_id" value="{{ other_user_id|default_if_none:'' }}">
+
+<div>
+    <label for="remote_id">Enter Remote User ID:</label>
+    <input type="text" id="remote_id" placeholder="Remote User ID">
+    <span id="status"></span>
+</div>
+<div class="position-relative m-4">
+    <button type="button" class="btn btn-outline-success dialActionButton" onclick="call()" id="call_id">
+        Talk to stranger
+    </button>
+    <p class="fst-italic mb-0">After clicking on the buttton you will be redirect to our calling page where you will find unknow person that listen to you. </p>
+</div>
+
+<div id="incomingCall" style="display:none;">
+  <p>Incoming call...</p>
+  <button id="acceptBtn" class="btn btn-success">Accept</button>
+  <button id="declineBtn" class="btn btn-danger">Decline</button>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-5 p-3">
+    <div class="me-3">
+    <li class="fst-italic mb-0">The greatest glory in living lies not in never falling, but in rising every time we fall. - Unknown </li>
+    <li class="fst-italic mb-0">Life is what happens when you're busy making other plans. - Unknown</li>
+    <li class="fst-italic mb-0">The greatest thing in the world is to know how to belong to oneself. - Michel de Montaigne. </li>
+    <li class="fst-italic mb-0">Solitude is the space where you can grow. - Unknown </li>
+    <li class="fst-italic mb-0">I don't mind being alone. I'm just not good at being lonely. - Unknown</li>
+    <li class="fst-italic mb-0">The strongest man in the world is he who stands alone. - Henrik Ibsen </li>
+    <li class="fst-italic mb-0">Alone, we can do so little; together, we can do so much. - Helen Keller </li>
+    <li class="fst-italic mb-0">Sometimes, being alone is the best choice you can make. - Unknown</li>
+    <li class="fst-italic mb-0">The best part about being alone is that you can do what you want when you want. - Unknown </li>
+    <li class="fst-italic mb-0">Loneliness adds beauty to life. It puts a special burn on sunsets and makes night air smell better. - Henry Rollins </li>
+    </div>
+    {% load static %}
+    <div>
+        <img src="{% static 'quotes_imag.jpeg' %}" alt="Motivational Image" class="img-fluid rounded" style="max-width: 400px; height: auto;">
+    </div>
+</div>
+
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+const socket = io('http://localhost:5001', { transports: ['websocket'] });
+const currentUserId = document.getElementById('my_id').textContent.trim();
+
+socket.on('connect', () => {
+    document.getElementById('socketId').textContent = socket.id;
+    if (currentUserId) {
+        socket.emit('register', { userId: currentUserId });
+    }
+});
+
+// Listen for incoming call requests
+socket.on('call-request', data => {
+  showCallRequestUI(data.from);
+});
+
+{% comment %} function showCallRequestUI(fromId) {
+  document.getElementById('incomingCall').style.display = 'block';
+  // Play notification sound
+  document.getElementById('callSound').play().catch(()=>{});
+  // Optionally show a browser notification
+  if (window.Notification && Notification.permission === "granted") {
+    new Notification("Incoming Call", { body: "You have an incoming call!" });
+  } else if (window.Notification && Notification.permission !== "denied") {
+    Notification.requestPermission().then(permission => {
+      if (permission === "granted") {
+        new Notification("Incoming Call", { body: "You have an incoming call!" });
+      }
+    });
+  }
+    
+  document.getElementById('acceptBtn').onclick = () => {
+    socket.emit('call-accept', { target: fromId });
+    hideCallRequestUI();
+    window.location.href = `/call?target=${encodeURIComponent(fromId)}`;
+  };
+  document.getElementById('declineBtn').onclick = () => {
+    socket.emit('call-decline', { target: fromId });
+    hideCallRequestUI();
+  };
+}
+{% endcomment %}
+
+function showCallRequestUI(fromId) {
+  document.getElementById('incomingCall').style.display = 'block';
+  document.getElementById('acceptBtn').onclick = () => {
+    socket.emit('call-accept', { target: fromId });
+    hideCallRequestUI();
+    window.location.href = `/call?target=${encodeURIComponent(fromId)}`;
+  };
+  document.getElementById('declineBtn').onclick = () => {
+    socket.emit('call-decline', { target: fromId });
+    hideCallRequestUI();
+  };
+}
+
+function hideCallRequestUI() { 
+  document.getElementById('incomingCall').style.display = 'none';
+}
+function call() {
+    const remoteId = document.getElementById("remote_id").value.trim() || document.getElementById("default_remote_id").value.trim();
+    if (!remoteId) {
+        alert("Please enter a remote user ID or wait for an active user to be available.");
+        return;
+    }
+    window.location.href = `/call?target=${encodeURIComponent(remoteId)}`;
+}
+</script>
+
+{% endblock %}
