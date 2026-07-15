@@ -12,7 +12,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.contrib.auth.hashers import make_password
 import re
-from .helpers import send_otp_user
+from .helpers import send_otp_whatsapp_only
 from django.urls import reverse_lazy
 from django.http import JsonResponse
 import os
@@ -125,21 +125,16 @@ def sign_up(request):
             return redirect('/sign_up/')
 
         # Generate and send OTP
-        print(f"\n👤 USER SIGNUP INITIATED:")
-        print(f"   Name: {name}")
-        print(f"   Email: {email}")
-        print(f"   Country Code: {country_code}")
-        print(f"   Mobile Input: {mobile}")
-        print(f"   ✅ FINAL PHONE NUMBER: {phone_number}")
+        print(f"   FINAL PHONE NUMBER: {phone_number}")
         print(f"   Sending OTP to this number...\n")
         
-        otp = send_otp_user(phone_number)
+        otp = send_otp_whatsapp_only(phone_number)
 
         if not otp:
             messages.error(request, "Check Mobile is correct or not. Please try again.")
             return render(request, 'sign_up.html')
         
-        print(f"✅ OTP SENT successfully to {phone_number}")
+        print(f"OTP SENT successfully to {phone_number}")
         
         # Store signup data and OTP in session
         request.session['signup_data'] = {
@@ -194,6 +189,7 @@ def verify_otp(request):
                 phone_number=signup_data['mobile'],
                 age=signup_data['age'],
                 gender=signup_data['gender'],
+                password =make_password(signup_data['password']),  # Hash the password
                 is_Verified=True
             )
             # Set password properly (hashes it)
@@ -204,11 +200,10 @@ def verify_otp(request):
             
             # Authenticate the user
             authenticated_user = authenticate(
-                request=request,
                 username=signup_data['mobile'],
                 password=signup_data['password']
             )
-            print("Redirecting to dashboard with authenticated user:", authenticated_user)
+            #print("Redirecting to dashboard with authenticated user:", authenticated_user)
             if authenticated_user:
                 # Log in the user
                 login(request, authenticated_user)
@@ -218,14 +213,14 @@ def verify_otp(request):
                 del request.session['signup_data']
                 # request.session.flush()  # Ensures no stale session data remains
 
-                messages.success(request, "Registration successful! You are now logged in.")
-                print("User authenticated:", request.user.is_authenticated)
+                messages.success(request, "Account created, but automatic login failed. Please log in manually.")
+                #print("User authenticated:", request.user.is_authenticated)
 
                 # Redirect to dashboard
                 return redirect('/dashboard/') # '/dashboard/' if its not redirect then render to Dashboard
             else:
                 messages.error(request, "Authentication failed. Now you can you manually!")
-                return render('/sign_up/')
+                return redirect('/login_page/')
             
         except Exception as e:
             # if verification faild in then stay in Sign up page 
@@ -267,7 +262,6 @@ class CallManager:
             return number_list[0] if number_list else None
 
 
-
 @login_required
 def call_page(request):
     # Fetch 10 active users from the database
@@ -284,6 +278,7 @@ def call_page(request):
     } 
 
     return render(request, 'calls/call.html',context)
+
 
 # start the call
 def initiate_call(request):
@@ -309,8 +304,6 @@ def initiate_call(request):
         })
     
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
-
-
 
 
 def attempt_call(number):

@@ -10,7 +10,7 @@ except ImportError:
     TWILIO_AVAILABLE = False
 
 def send_otp_user(phone_number):
-    """Send OTP via WhatsApp using Twilio (signup only - no fallback)
+    """Send OTP via WhatsApp (primary) or SMS fallback
     
     Args:
         phone_number: User's phone number in E.164 format (e.g., +919876543210)
@@ -21,52 +21,60 @@ def send_otp_user(phone_number):
     try:
         otp = random.randint(1000, 9999)
         
-        # WhatsApp via Twilio (required for signup)
+        # Try WhatsApp via Twilio first
         twilio_account_sid = os.getenv('TWILIO_ACCOUNT_SID')
         twilio_auth_token = os.getenv('TWILIO_AUTH_TOKEN')
-        twilio_whatsapp_from = os.getenv('TWILIO_WHATSAPP_FROM')  # Format: whatsapp:+14155238886
+        twilio_whatsapp_from = os.getenv('TWILIO_WHATSAPP_FROM')
         
-        if not TWILIO_AVAILABLE:
-            print(f"❌ Twilio not installed. Run: pip install twilio")
-            return None
+        # Ensure phone number is in E.164 format (e.g., +919876543210)
+        if not str(phone_number).startswith('+'):
+            phone_number_formatted = '+' + str(phone_number)
+        else:
+            phone_number_formatted = str(phone_number)
         
-        if not all([twilio_account_sid, twilio_auth_token, twilio_whatsapp_from]):
-            print("❌ Twilio credentials missing:")
-            print(f"   TWILIO_ACCOUNT_SID: {'SET' if twilio_account_sid else 'NOT SET'}")
-            print(f"   TWILIO_AUTH_TOKEN: {'SET' if twilio_auth_token else 'NOT SET'}")
-            print(f"   TWILIO_WHATSAPP_FROM: {'SET' if twilio_whatsapp_from else 'NOT SET'}")
-            return None
+        print(f"\n📱 Attempting to send OTP to: {phone_number_formatted}")
+        print(f"   OTP Code: {otp}")
         
+        # Try Twilio WhatsApp if credentials are available
+        if TWILIO_AVAILABLE and twilio_account_sid and twilio_auth_token and twilio_whatsapp_from:
+            try:
+                print(f"   Method: WhatsApp (via Twilio)")
+                client = Client(twilio_account_sid, twilio_auth_token)
+                message = client.messages.create(
+                    from_=twilio_whatsapp_from,
+                    to=f"whatsapp:{phone_number_formatted}",
+                    body=f"Your One Time Password (OTP) is: {otp}\n\nDo not share this with anyone."
+                )
+                print(f"   ✅ WhatsApp OTP sent! Message SID: {message.sid}\n")
+                return otp
+            except Exception as twilio_error:
+                print(f"   ❌ WhatsApp failed: {twilio_error}")
+                print(f"   Falling back to SMS...\n")
+        else:
+            print(f"   ⚠️  Twilio not configured, using SMS fallback")
+        
+        # FALLBACK: Send OTP via SMS using 2factor.in
         try:
-            client = Client(twilio_account_sid, twilio_auth_token)
+            api_key = settings.API_KEY
+            # Remove + from phone number for SMS API
+            phone_for_sms = phone_number_formatted.lstrip('+')
+            url = f'https://2factor.in/API/V1/{api_key}/SMS/{phone_for_sms}/{otp}/One_time_verification'
+            response = requests.get(url, timeout=10)
             
-            # Ensure phone number is in E.164 format (e.g., +919876543210)
-            if not str(phone_number).startswith('+'):
-                phone_number_formatted = '+' + str(phone_number)
+            if response.status_code == 200:
+                print(f"   Method: SMS (via 2factor.in)")
+                print(f"   ✅ SMS OTP sent! Response: {response.status_code}\n")
+                return otp
             else:
-                phone_number_formatted = str(phone_number)
-            
-            # DEBUG: Show which user number is getting the OTP
-            print(f"\n Sending OTP to USER's WhatsApp number: {phone_number_formatted}")
-            print(f"   OTP Code: {otp}")
-            print(f"   From Twilio: {twilio_whatsapp_from}\n")
-            
-            message = client.messages.create(
-                from_=twilio_whatsapp_from,
-                to=f"whatsapp:{phone_number_formatted}",
-                body=f"Your One Time Password (OTP) is: {otp}\n\nDo not share this with anyone."
-            )
-            print(f"WhatsApp OTP successfully sent!")
-            print(f"   Message SID: {message.sid}")
-            print(f"   Sent to: {phone_number_formatted}\n")
-            return otp
-            
-        except Exception as twilio_error:
-            print(f"WhatsApp OTP failed: {twilio_error}")
+                print(f"   ❌ SMS failed with status {response.status_code}: {response.text}\n")
+                return None
+                
+        except Exception as sms_error:
+            print(f"   ❌ SMS fallback failed: {sms_error}\n")
             return None
         
     except Exception as e:
-        print(f"Error in send_otp_user: {e}")
+        print(f"❌ Error in send_otp_user: {e}\n")
         return None
 
 
@@ -96,7 +104,7 @@ def send_otp_whatsapp_only(phone_number):
         message = client.messages.create(
             from_=twilio_whatsapp_from,
             to=f"whatsapp:{phone_number_formatted}",
-            body=f"Your One Time Password (OTP) is: {otp}\n\nDo not share this with anyone."
+            body=f"Your Neo Sign-up One Time Password (OTP) is: {otp}\n\nDo not share this with anyone. Welcome to Neo Call"
         )
         print(f"WhatsApp OTP sent successfully: {message.sid}")
         return otp

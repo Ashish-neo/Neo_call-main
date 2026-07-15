@@ -10,3 +10,4 @@ python-socketio
 gunicorn
 daphne
 twilio
+eventlet
