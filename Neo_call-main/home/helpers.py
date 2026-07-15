@@ -32,7 +32,7 @@ def send_otp_user(phone_number):
         else:
             phone_number_formatted = str(phone_number)
         
-        print(f"\n📱 Attempting to send OTP to: {phone_number_formatted}")
+        print(f"\nAttempting to send OTP to: {phone_number_formatted}")
         print(f"   OTP Code: {otp}")
         
         # Try Twilio WhatsApp if credentials are available
@@ -43,15 +43,15 @@ def send_otp_user(phone_number):
                 message = client.messages.create(
                     from_=twilio_whatsapp_from,
                     to=f"whatsapp:{phone_number_formatted}",
-                    body=f"Your One Time Password (OTP) is: {otp}\n\nDo not share this with anyone."
+                    body=f"Your One Time Password (OTP) is: {otp}\n\nDo not share this with anyone.\n Welcome to Neo Call to Share."
                 )
-                print(f"   ✅ WhatsApp OTP sent! Message SID: {message.sid}\n")
+                print(f"   WhatsApp OTP sent! Message SID: {message.sid}\n")
                 return otp
             except Exception as twilio_error:
-                print(f"   ❌ WhatsApp failed: {twilio_error}")
+                print(f"   WhatsApp failed: {twilio_error}")
                 print(f"   Falling back to SMS...\n")
         else:
-            print(f"   ⚠️  Twilio not configured, using SMS fallback")
+            print(f"   Twilio not configured, using SMS fallback")
         
         # FALLBACK: Send OTP via SMS using 2factor.in
         try:
@@ -63,18 +63,18 @@ def send_otp_user(phone_number):
             
             if response.status_code == 200:
                 print(f"   Method: SMS (via 2factor.in)")
-                print(f"   ✅ SMS OTP sent! Response: {response.status_code}\n")
+                print(f"  SMS OTP sent! Response: {response.status_code}\n")
                 return otp
             else:
-                print(f"   ❌ SMS failed with status {response.status_code}: {response.text}\n")
+                print(f" SMS failed with status {response.status_code}: {response.text}\n")
                 return None
                 
         except Exception as sms_error:
-            print(f"   ❌ SMS fallback failed: {sms_error}\n")
+            print(f" SMS fallback failed: {sms_error}\n")
             return None
         
     except Exception as e:
-        print(f"❌ Error in send_otp_user: {e}\n")
+        print(f" Error in send_otp_user: {e}\n")
         return None
 
 

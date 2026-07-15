@@ -203,4 +203,4 @@ def default_error_handler(e):
 
 if __name__ == '__main__':
     logger.info(f'Signaling server running on {SIGNALING_HOST}:{SIGNALING_PORT}')
-    socketio.run(app, host=SIGNALING_HOST, port=SIGNALING_PORT, debug=False)
+    socketio.run(app, host=SIGNALING_HOST, port=SIGNALING_PORT, debug=False, allow_unsafe_werkzeug=True)
